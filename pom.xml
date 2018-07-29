@@ -85,6 +85,7 @@
                                     <fileset dir="${project.build.directory}/mods">
                                         <include name="javafx-*.jar"/>
                                         <exclude name="javafx-*-win.jar"/>
+                                        <exclude name="javafx-*-mac.jar"/>
                                     </fileset>
                                 </delete>
                             </target>
