@@ -296,6 +296,7 @@ module javamoduleexample {
                                     <fileset dir="${project.build.directory}/mods">
                                         <include name="javafx-*.jar"/>
                                         <exclude name="javafx-*-win.jar"/>
+                                        <exclude name="javafx-*-mac.jar"/>
                                     </fileset>
                                 </delete>
                             </target>
@@ -374,11 +375,13 @@ mvn package exec:java
 
 対象とするプラットフォームごとに依存jarが異なるようで、Windowsの場合は ``` javafx-*-win.jar``` という名前がつけられている。
 
+(ちなみに、Macの場合には、```javafx-*-mac.jar``` という名前が付けられている。)
+
 ```win.jar``` でないものは、中身が空で、マニフェストもmodule-infoも入っていないので、いらないものである。
 
 というか、あると不味い。
 
-たとえば、modsフォルダをjavaのモジュールパスとして指定すると、この空のjarにはマニフェストもmodule-infoもないので、モジュールの規則に従い、「自動モジュール名」として認識されるが、その名前が不味いようなのだ。
+たとえば、modsフォルダをjavaのモジュールパスとして指定すると、この空のjarにはマニフェストもmodule-infoもないので、モジュールの規則に従い、ファイル名から「自動モジュール名」として認識されるが、その名前が不味いようなのだ。
 
 以下のようなエラーになる。
 
@@ -489,6 +492,24 @@ fxml=jrt:/javamoduleexample/MainWindow.fxml
 明示的にbinフォルダにコピーしたdllは、全部足しても1MBないのでダブリだとしても許容内かな。
 
 <small>※ 早く直るといいなー。</small>
+
+### Macの場合
+
+Macの場合もWindowsと同じ状況になる。
+
+```javafx-graphics-11-ea+19-mac.jar``` を展開して、
+
+```
+libdecora_sse.dylib
+libglass.dylib
+libjavafx_font.dylib
+libjavafx_iio.dylib
+libprism_common.dylib
+libprism_es2.dylib
+libprism_sw.dylib
+```
+
+これを ```lib```  フォルダにコピーすれば動作するようになる。
 
 ## まとめ
 
