@@ -353,8 +353,8 @@ module javamoduleexample {
 
 ### ビルド設定の要点
 
-- openjdkは ```11-ea+25``` のものを使用する
-- javacは ```release=11``` を指定した。
+- OpenJFXは ```11-ea+25``` のものを使用する
+- コンパイルでは ```release=11``` を指定した。
   - java10以前ではASMを差し替える等の細工が必要だったが、```maven-compiler-plugin:3.8.0``` では指定はいらないようだ。(むしろ不味い？)
 
 ### ビルドと無名モジュールとしての実行
