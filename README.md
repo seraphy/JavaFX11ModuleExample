@@ -432,7 +432,15 @@ jlink --module-path target/mods --add-modules javamoduleexample --no-man-pages -
 
 ```---launcher シェル名=モジュール名／FQCN``` とすることで、起動用のシェルも作成してくれる。(中身をみると、たいしたことはやってないのだが。)
 
-<font color="red">● openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、以下のような小細工が必要だったが、 ** ```11-ea+25``` では修正された ** ようである。</font>
+これでできあがった実行環境は
+
+```
+release\bin\run.bat
+```
+
+のようにして起動できる。
+
+<font color="red">● openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、以下のような小細工が必要だったが、 **```11-ea+25```では修正された** ようである。</font>
 
 ### 実行時にNoSuchMethodErrorエラーが発生する場合
 
