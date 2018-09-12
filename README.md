@@ -432,8 +432,36 @@ jlink --module-path target/mods --add-modules javamoduleexample --no-man-pages -
 
 ```---launcher シェル名=モジュール名／FQCN``` とすることで、起動用のシェルも作成してくれる。(中身をみると、たいしたことはやってないのだが。)
 
-<font color="red">● openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、以下のような小細工が必要だったが、 *** ```11-ea+25``` では修正された *** ようである。</font>
+<font color="red">● openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、以下のような小細工が必要だったが、 ** ```11-ea+25``` では修正された ** ようである。</font>
 
+### 実行時にNoSuchMethodErrorエラーが発生する場合
+
+起動時に
+
+```
+Exception in thread "WindowsNativeRunloopThread" java.lang.NoSuchMethodError: <init>
+        at javafx.graphics/com.sun.glass.ui.win.WinApplication.staticScreen_getScreens(Native Method)
+        at javafx.graphics/com.sun.glass.ui.Screen.initScreens(Screen.java:412)
+        at javafx.graphics/com.sun.glass.ui.Application.lambda$run$1(Application.java:152)
+        at javafx.graphics/com.sun.glass.ui.win.WinApplication._runLoop(Native Method)
+        at javafx.graphics/com.sun.glass.ui.win.WinApplication.lambda$runLoop$3(WinApplication.java:174)
+        at java.base/java.lang.Thread.run(Thread.java:834)
+```
+のようなエラーがでる場合は、環境変数PATHの中で古いJavaFXを参照して、そのDLLが読み込まれている可能性がある。
+
+(Pleiades標準のEclipseのプラグインでパッケージエクスプローラからコマンドプロンプトを開くものがあるが、
+これを使うとEclipseまわりのパスが環境変数PATHに設定されるので不味いことになるようだ。)
+
+対策として、Java関連のPATHをないようにしてする。
+
+たとえば、
+
+```
+set PATH=C:\Windows\system32;C:\Windows
+release\bin\run.bat
+```
+
+のようなシンプルな最小限のパスにしてから起動してみると良いかもしれない。
 
 
 ## まとめ
