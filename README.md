@@ -1,5 +1,7 @@
 # JavaFXをJava11でビルドして使えるようにする方法
 
+<ins>※ 2018/09/12修正: Java11のRC版(build 11+28) + OpenJFX(11-ea+25)で試したバージョンに差し替え</ins>
+
 ## 要旨
 
 Java11から、JavaFXは分離されるので、Java11(OpenJDK11)でJavaFXを使うにはどうしたらよいのか？
@@ -15,16 +17,16 @@ Java11から、JavaFXは分離されるので、Java11(OpenJDK11)でJavaFXを使
 
 ## 実験コード
 
-Windows上のOpenJDK11(11-ea)で、以下のようなJavaFXの簡単なコードで試す。
+Windows上のOpenJDK11(RC 11+28)で、以下のようなJavaFXの簡単なコードで試す。
 
 ```
 > java -version
-java version "11-ea" 2018-09-25
-Java(TM) SE Runtime Environment 18.9 (build 11-ea+20)
-Java HotSpot(TM) 64-Bit Server VM 18.9 (build 11-ea+20, mixed mode)
+openjdk version "11" 2018-09-25
+OpenJDK Runtime Environment 18.9 (build 11+28)
+OpenJDK 64-Bit Server VM 18.9 (build 11+28, mixed mode)
 ```
 
-使用したMavenは、Apache Maven 3.5.0 
+使用したMavenは、Apache Maven 3.5.0
 
 ### JavaModuleExample.java
 
@@ -76,7 +78,7 @@ public class JavaModuleExample extends Application implements Initializable {
 
     @FXML
     private TableColumn<SysProp, String> colValue;
-    
+
     private ObservableList<SysProp> sysPropItems = FXCollections.observableArrayList();
 
     private Stage stage;
@@ -215,46 +217,46 @@ module javamoduleexample {
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
+
     <groupId>jp.seraphyware.example</groupId>
     <artifactId>javamoduleexample</artifactId>
-    <packaging>jar</packaging>
     <version>1.0-SNAPSHOT</version>
+
+    <packaging>jar</packaging>
+
     <name>JavaModuleExample</name>
     <url>http://maven.apache.org</url>
+
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    	<java.version>11</java.version>
+    	<openjfx.version>11-ea+25</openjfx.version>
+        <mainClass>jp.seraphyware.example.JavaModuleExample</mainClass>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>11-ea+19</version>
+            <version>${openjfx.version}</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>11-ea+19</version>
+            <version>${openjfx.version}</version>
         </dependency>
     </dependencies>
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <mainClass>jp.seraphyware.example.JavaModuleExample</mainClass>
-    </properties>
+
     <build>
         <plugins>
             <!-- java10以降のコンパイル -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.7.0</version>
+                <version>3.8.0</version>
                 <configuration>
-                    <release>10</release>
+                    <release>${java.version}</release>
                 </configuration>
-                <dependencies>
-                    <dependency>
-                        <groupId>org.ow2.asm</groupId>
-                        <artifactId>asm</artifactId>
-                        <version>6.1.1</version>
-                        <!-- Use newer version of ASM -->
-                    </dependency>
-                </dependencies>
             </plugin>
             <!-- 依存するJARのlibへの展開  -->
             <plugin>
@@ -279,7 +281,8 @@ module javamoduleexample {
                 </executions>
             </plugin>
             <!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。
-                (-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
+                (-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
+                ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
              -->
             <plugin>
                 <artifactId>maven-antrun-plugin</artifactId>
@@ -347,9 +350,14 @@ module javamoduleexample {
     </build>
 </project>
 ```
-なお、コンパイラの指定でバージョン10にしているが、11は、まだmaven3.5では認識してくれないため。
 
-(10でビルドしても11で動作するので、さしあたり。)
+### ビルド設定の要点
+
+- openjdkは ```11-ea+25``` のものを使用する
+- javacは ```release=11``` を指定した。
+  - java10以前ではASMを差し替える等の細工が必要だったが、```maven-compiler-plugin:3.8.0``` では指定はいらないようだ。(むしろ不味い？)
+
+### ビルドと無名モジュールとしての実行
 
 ```shell
 mvn package exec:java
@@ -358,6 +366,7 @@ mvn package exec:java
 このようにすると、ビルドして、実際にJavaFXのアプリケーションを起動してくれる。
 
 ただし、この場合、```module-info.java``` を指定していても、メインクラスは無名モジュールとして読み込まれているようである。
+
 
 ### JavaFX関連jarの抜き出し
 
@@ -423,93 +432,9 @@ jlink --module-path target/mods --add-modules javamoduleexample --no-man-pages -
 
 ```---launcher シェル名=モジュール名／FQCN``` とすることで、起動用のシェルも作成してくれる。(中身をみると、たいしたことはやってないのだが。)
 
-### しかし、起動しない...。まだ正式版でないからか？
+<font color="red">● openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、以下のような小細工が必要だったが、 *** ```11-ea+25``` では修正された *** ようである。</font>
 
-```shell
-> bin\run.bat
-Graphics Device initialization failed for :  d3d, sw
-Error initializing QuantumRenderer: no suitable pipeline found
-java.lang.RuntimeException: java.lang.RuntimeException: Error initializing QuantumRenderer: no suitable pipeline found
-        at javafx.graphics/com.sun.javafx.tk.quantum.QuantumRenderer.getInstance(QuantumRenderer.java:280)
-        at javafx.graphics/com.sun.javafx.tk.quantum.QuantumToolkit.init(QuantumToolkit.java:222)
-        at javafx.graphics/com.sun.javafx.tk.Toolkit.getToolkit(Toolkit.java:260)
-        at javafx.graphics/com.sun.javafx.application.PlatformImpl.startup(PlatformImpl.java:263)
-        at javafx.graphics/com.sun.javafx.application.PlatformImpl.startup(PlatformImpl.java:157)
-        at javafx.graphics/com.sun.javafx.application.LauncherImpl.startToolkit(LauncherImpl.java:658)
-        at javafx.graphics/com.sun.javafx.application.LauncherImpl.launchApplicationWithArgs(LauncherImpl.java:409)
-        at javafx.graphics/com.sun.javafx.application.LauncherImpl.launchApplication(LauncherImpl.java:363)
-        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-        at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-        at java.base/java.lang.reflect.Method.invoke(Method.java:566)
-        at java.base/sun.launcher.LauncherHelper$FXHelper.main(LauncherHelper.java:1051)
-Caused by: java.lang.RuntimeException: Error initializing QuantumRenderer: no suitable pipeline found
-        at javafx.graphics/com.sun.javafx.tk.quantum.QuantumRenderer$PipelineRunnable.init(QuantumRenderer.java:94)
-        at javafx.graphics/com.sun.javafx.tk.quantum.QuantumRenderer$PipelineRunnable.run(QuantumRenderer.java:124)
-        at java.base/java.lang.Thread.run(Thread.java:834)
-Exception in thread "main" java.lang.reflect.InvocationTargetException
-        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
-        at java.base/jdk.internal.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
-        at java.base/jdk.internal.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
-        at java.base/java.lang.reflect.Method.invoke(Method.java:566)
-        at java.base/sun.launcher.LauncherHelper$FXHelper.main(LauncherHelper.java:1051)
-Caused by: java.lang.RuntimeException: No toolkit found
-        at javafx.graphics/com.sun.javafx.tk.Toolkit.getToolkit(Toolkit.java:272)
-        at javafx.graphics/com.sun.javafx.application.PlatformImpl.startup(PlatformImpl.java:263)
-        at javafx.graphics/com.sun.javafx.application.PlatformImpl.startup(PlatformImpl.java:157)
-        at javafx.graphics/com.sun.javafx.application.LauncherImpl.startToolkit(LauncherImpl.java:658)
-        at javafx.graphics/com.sun.javafx.application.LauncherImpl.launchApplicationWithArgs(LauncherImpl.java:409)
-        at javafx.graphics/com.sun.javafx.application.LauncherImpl.launchApplication(LauncherImpl.java:363)
-        ... 5 more
-```
 
-JavaFXのネイティブライブラリがうまく読み込めてないのではないのか、と適当に当たりをつける。
-
-```javafx-graphics-11-ea+19-win.jar``` を展開すると、ルートにwindows用のDLLがごろごろ出てくる。
-
-WindowsのCRTはすでにjava.exeで使われているので、以下のものが不足分であろうか？
-
-```
-decora_sse.dll
-glass.dll
-javafx_font.dll
-javafx_iio.dll
-prism_common.dll
-prism_d3d.dll
-prism_sw.dll
-```
-
-これを、java.exeと同じフォルダにコピーする。
-
-そして、再チャレンジ
-```shell
-> bin\run.bat                              
-fxml=jrt:/javamoduleexample/MainWindow.fxml
-```
-
-今度はうまくゆきました。
-
-明示的にbinフォルダにコピーしたdllは、全部足しても1MBないのでダブリだとしても許容内かな。
-
-<small>※ 早く直るといいなー。</small>
-
-### Macの場合
-
-Macの場合もWindowsと同じ状況になる。
-
-```javafx-graphics-11-ea+19-mac.jar``` を展開して、
-
-```
-libdecora_sse.dylib
-libglass.dylib
-libjavafx_font.dylib
-libjavafx_iio.dylib
-libprism_common.dylib
-libprism_es2.dylib
-libprism_sw.dylib
-```
-
-これを ```lib```  フォルダにコピーすれば動作するようになる。
 
 ## まとめ
 
