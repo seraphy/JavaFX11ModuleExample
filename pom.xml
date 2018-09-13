@@ -1,138 +1,163 @@
-<project
-    xmlns="http://maven.apache.org/POM/4.0.0"
-    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>jp.seraphyware.example</groupId>
-    <artifactId>javamoduleexample</artifactId>
-    <version>1.0-SNAPSHOT</version>
+	<groupId>jp.seraphyware.example</groupId>
+	<artifactId>javamoduleexample</artifactId>
+	<version>1.0-SNAPSHOT</version>
 
-    <packaging>jar</packaging>
+	<packaging>jar</packaging>
 
-    <name>JavaModuleExample</name>
-    <url>http://maven.apache.org</url>
+	<name>JavaModuleExample</name>
+	<url>http://maven.apache.org</url>
 
-    <properties>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    	<java.version>11</java.version>
-    	<openjfx.version>11-ea+25</openjfx.version>
-        <mainClass>jp.seraphyware.example.JavaModuleExample</mainClass>
-    </properties>
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<java.version>11</java.version>
+		<openjfx.version>11-ea+25</openjfx.version>
+		<mainClass>jp.seraphyware.example.JavaModuleExample</mainClass>
+	</properties>
 
-    <dependencies>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-controls</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.openjfx</groupId>
-            <artifactId>javafx-fxml</artifactId>
-            <version>${openjfx.version}</version>
-        </dependency>
-    </dependencies>
+	<dependencies>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-controls</artifactId>
+			<version>${openjfx.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.openjfx</groupId>
+			<artifactId>javafx-fxml</artifactId>
+			<version>${openjfx.version}</version>
+		</dependency>
+	</dependencies>
 
-    <build>
-        <plugins>
-            <!-- java10以降のコンパイル -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-                <version>3.8.0</version>
-                <configuration>
-                    <release>${java.version}</release>
-                </configuration>
-            </plugin>
-            <!-- 依存するJARのlibへの展開  -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.1.1</version>
-                <executions>
-                    <execution>
-                        <id>copy-dependencies</id>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>copy-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <outputDirectory>${project.build.directory}/mods</outputDirectory>
-                            <overWriteReleases>false</overWriteReleases>
-                            <overWriteSnapshots>false</overWriteSnapshots>
-                            <overWriteIfNewer>true</overWriteIfNewer>
-                            <includeScope>runtime</includeScope>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。
-                (-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
-                ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
-             -->
-            <plugin>
-                <artifactId>maven-antrun-plugin</artifactId>
-                <version>1.7</version>
-                <executions>
-                    <execution>
-                        <phase>prepare-package</phase>
-                        <goals>
-                            <goal>run</goal>
-                        </goals>
-                        <configuration>
-                            <target>
-                                <delete>
-                                    <fileset dir="${project.build.directory}/mods">
-                                        <include name="javafx-*.jar"/>
-                                        <exclude name="javafx-*-win.jar"/>
-                                        <exclude name="javafx-*-mac.jar"/>
-                                    </fileset>
-                                </delete>
-                            </target>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- JAR -->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <!-- 依存jarと同じmodsファイルに出力する -->
-                    <outputDirectory>${project.build.directory}/mods</outputDirectory>
-                    <archive>
-                        <manifest>
-                            <!--
-                            MEANIFESTによるメインクラスの指定は意味ないかも。
-                            java -p mods -m javamoduleexample/jp.seraphyware.example.JavaModuleExampl
-                            で起動するため。
-                            -->
-                            <mainClass>${mainClass}</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
-            <!--
-            Mavenから実行できるようにする。(ただし、無名パッケージ扱いになる)
-            mvn package exec:java
-			-->
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.2.1</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>java</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <mainClass>${mainClass}</mainClass>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+	<build>
+		<plugins>
+			<!-- java10以降のコンパイル -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>3.8.0</version>
+				<configuration>
+					<release>${java.version}</release>
+				</configuration>
+			</plugin>
+			<!-- JAR -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-jar-plugin</artifactId>
+				<version>3.1.0</version>
+				<configuration>
+					<!-- 依存jarと同じmodsファイルに出力する -->
+					<outputDirectory>${project.build.directory}/mods</outputDirectory>
+					<archive>
+						<manifest>
+							<!-- MEANIFESTによるメインクラスの指定は意味ないかも。
+								 java -p mods -m javamoduleexample/jp.seraphyware.example.JavaModuleExampl
+								で起動するため。 -->
+							<mainClass>${mainClass}</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+			</plugin>
+			<!-- 依存するJARのlibへの展開 -->
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<version>3.1.1</version>
+				<executions>
+					<execution>
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>copy-dependencies</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/mods</outputDirectory>
+							<overWriteReleases>false</overWriteReleases>
+							<overWriteSnapshots>false</overWriteSnapshots>
+							<overWriteIfNewer>true</overWriteIfNewer>
+							<includeScope>runtime</includeScope>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-antrun-plugin</artifactId>
+				<version>1.8</version>
+				<executions>
+					<execution>
+						<!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。
+							(-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
+							ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
+						 -->
+						<id>copy-dependencies</id>
+						<phase>prepare-package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<delete>
+									<fileset dir="${project.build.directory}/mods">
+										<include name="javafx-*.jar" />
+										<exclude name="javafx-*-win.jar" />
+										<exclude name="javafx-*-mac.jar" />
+									</fileset>
+								</delete>
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<!--
+							現時点(maven-jar-plugin:3.1.0)では、module-info.javaに対する、module-main-class, module-version属性を
+							付与することができないので、java9以降のjarコマンドを直接使用して属性を更新させる。
+							https://stackoverflow.com/questions/43671410/how-to-specify-main-class-and-module-version-in-maven-jar-plugin
+
+							これにより、
+							java -p target/mods -m javamoduleexample
+							としてモジュール名を指定してモジュールのメインクラスを実行することができる。
+						-->
+						<id>module-info-attributes</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<exec executable="${java.home}/bin/jar" failonerror="true">
+									<arg value="--main-class" />
+									<arg value="${mainClass}" />
+									<arg value="--module-version" />
+									<arg value="${project.version}" />
+									<arg value="--update" />
+									<arg value="--file" />
+									<arg value="${project.build.directory}/mods/${project.artifactId}-${project.version}.jar" />
+								</exec>
+							</target>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<!-- Mavenから実行できるようにする。(ただし、無名パッケージ扱いになる) mvn package exec:java -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>exec-maven-plugin</artifactId>
+				<version>1.2.1</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>java</goal>
+						</goals>
+					</execution>
+				</executions>
+				<configuration>
+					<mainClass>${mainClass}</mainClass>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
 </project>
 

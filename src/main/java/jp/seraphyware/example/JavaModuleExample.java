@@ -1,17 +1,25 @@
 package jp.seraphyware.example;
 
-import javafx.application.Application;
-import javafx.scene.*;
-import javafx.scene.control.*;
-import javafx.stage.*;
-import javafx.fxml.*;
-import javafx.beans.property.*;
-import javafx.collections.*;
-import javafx.collections.FXCollections;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.ResourceBundle;
+import java.util.TreeSet;
 
-import java.net.*;
-import java.io.*;
-import java.util.*;
+import javafx.application.Application;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableView;
+import javafx.stage.Stage;
 
 /**
  * システムプロパティを表示するJavaFX画面サンプル
@@ -44,7 +52,7 @@ public class JavaModuleExample extends Application implements Initializable {
 
     @FXML
     private TableColumn<SysProp, String> colValue;
-    
+
     private ObservableList<SysProp> sysPropItems = FXCollections.observableArrayList();
 
     private Stage stage;
