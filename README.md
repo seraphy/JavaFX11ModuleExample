@@ -406,14 +406,14 @@ mvn package exec:java
 
 ```maven-dependency-plugin``` で依存jarをmodsフォルダに出力するようにしているので、 ```package``` コマンドを実行すると、以下のファイルができる。
 
-- javafx-base-11-ea+19-win.jar
-- javafx-base-11-ea+19.jar
-- javafx-controls-11-ea+19-win.jar
-- javafx-controls-11-ea+19.jar
-- javafx-fxml-11-ea+19-win.jar
-- javafx-fxml-11-ea+19.jar
-- javafx-graphics-11-ea+19-win.jar
-- javafx-graphics-11-ea+19.jar
+- javafx-base-11-win.jar
+- javafx-base-11.jar
+- javafx-controls-11-win.jar
+- javafx-controls-11.jar
+- javafx-fxml-11-win.jar
+- javafx-fxml-11.jar
+- javafx-graphics-11-win.jar
+- javafx-graphics-11.jar
 - javamoduleexample-1.0-SNAPSHOT.jar
 
 対象とするプラットフォームごとに依存jarが異なるようで、Windowsの場合は ``` javafx-*-win.jar``` という名前がつけられている。
