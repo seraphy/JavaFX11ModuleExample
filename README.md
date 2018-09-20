@@ -1,6 +1,6 @@
 # JavaFXをJava11でビルドして使えるようにする方法
 
-<ins>※ 2018/09/12修正: Java11のRC版(build 11+28) + OpenJFX(11-ea+25)で試したバージョンに差し替え</ins>
+<ins>※ 2018/09/20修正: Java11のRC版(build 11+28) + OpenJFX11で試したバージョンに差し替え</ins>
 
 ## 要旨
 
@@ -19,14 +19,23 @@ Java11から、JavaFXは分離されるので、Java11(OpenJDK11)でJavaFXを使
 
 Windows上のOpenJDK11(RC 11+28)で、以下のようなJavaFXの簡単なコードで試す。
 
-```
+```shell
 > java -version
 openjdk version "11" 2018-09-25
 OpenJDK Runtime Environment 18.9 (build 11+28)
 OpenJDK 64-Bit Server VM 18.9 (build 11+28, mixed mode)
 ```
 
-使用したMavenは、Apache Maven 3.5.0
+使用したMavenは、Apache Maven 3.5.4
+
+```shell
+> mvn -v
+Apache Maven 3.5.4 (1edded0938998edf8bf061f1ceb3cfdeccf443fe; 2018-06-18T03:33:14+09:00)
+Maven home: C:\Java\apache-maven-3.5.4\bin\..
+Java version: 11, vendor: Oracle Corporation, runtime: C:\java\jdk-11
+Default locale: ja_JP, platform encoding: MS932
+OS name: "windows 7", version: "6.1", arch: "amd64", family: "windows"
+```
 
 ### JavaModuleExample.java
 
@@ -229,7 +238,7 @@ module javamoduleexample {
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>11</java.version>
-		<openjfx.version>11-ea+25</openjfx.version>
+		<openjfx.version>11</openjfx.version>
 		<mainClass>jp.seraphyware.example.JavaModuleExample</mainClass>
 	</properties>
 
@@ -378,7 +387,7 @@ module javamoduleexample {
 
 ### ビルド設定の要点
 
-- OpenJFXは ```11-ea+25``` のものを使用する
+- [OpenJFX 11](https://mvnrepository.com/artifact/org.openjfx/javafx-controls/11) のものを使用する
 - コンパイルでは ```release=11``` を指定した。
   - java10以前ではASMを差し替える等の細工が必要だったが、```maven-compiler-plugin:3.8.0``` では指定はいらないようだ。(むしろ不味い？)
 
