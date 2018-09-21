@@ -53,8 +53,7 @@
 					<outputDirectory>${project.build.directory}/mods</outputDirectory>
 					<archive>
 						<manifest>
-							<!-- MEANIFESTによるメインクラスの指定は意味ないかも。
-								 java -p mods -m javamoduleexample/jp.seraphyware.example.JavaModuleExampl
+							<!-- MEANIFESTによるメインクラスの指定は意味ないかも。 java -p mods -m javamoduleexample/jp.seraphyware.example.JavaModuleExampl
 								で起動するため。 -->
 							<mainClass>${mainClass}</mainClass>
 						</manifest>
@@ -88,11 +87,11 @@
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.8</version>
 				<executions>
+					<!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。 (-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
+						ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
+						** OpenJFX11正式版では空のjarには xxxEmptyという、別名となるモジュール名が割り当てられ衝突しなくなったので不要となった。 **
+						** 不要なjarであることには変わりないので、以下のスクリプトで消しても良い **
 					<execution>
-						<!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。
-							(-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
-							ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
-						 -->
 						<id>copy-dependencies</id>
 						<phase>prepare-package</phase>
 						<goals>
@@ -110,16 +109,12 @@
 							</target>
 						</configuration>
 					</execution>
+					-->
 					<execution>
-						<!--
-							現時点(maven-jar-plugin:3.1.0)では、module-info.javaに対する、module-main-class, module-version属性を
-							付与することができないので、java9以降のjarコマンドを直接使用して属性を更新させる。
-							https://stackoverflow.com/questions/43671410/how-to-specify-main-class-and-module-version-in-maven-jar-plugin
-
-							これにより、
-							java -p target/mods -m javamoduleexample
-							としてモジュール名を指定してモジュールのメインクラスを実行することができる。
-						-->
+						<!-- 現時点(maven-jar-plugin:3.1.0)では、module-info.javaに対する、module-main-class,
+							module-version属性を 付与することができないので、java9以降のjarコマンドを直接使用して属性を更新させる。
+							 https://stackoverflow.com/questions/43671410/how-to-specify-main-class-and-module-version-in-maven-jar-plugin
+							これにより、 java -p target/mods -m javamoduleexample としてモジュール名を指定してモジュールのメインクラスを実行することができる。 -->
 						<id>module-info-attributes</id>
 						<phase>package</phase>
 						<goals>
@@ -141,20 +136,22 @@
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Mavenから実行できるようにする。(ただし、無名パッケージ扱いになる) mvn package exec:java -->
+			<!-- Mavenからモジュールとして実行できるようにする。
+				https://www.mojohaus.org/exec-maven-plugin/examples/example-exec-for-java-programs.html
+				mvn package exec:exec
+			 -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
+				<version>1.6.0</version>
 				<configuration>
-					<mainClass>${mainClass}</mainClass>
+					<executable>${java.home}/bin/java</executable>
+					<arguments>
+						<argument>-p</argument>
+						<modulepath />
+						<argument>-m</argument>
+						<argument>javamoduleexample/${mainClass}</argument>
+					</arguments>
 				</configuration>
 			</plugin>
 		</plugins>
