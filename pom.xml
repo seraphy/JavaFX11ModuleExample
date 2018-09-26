@@ -16,7 +16,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<java.version>11</java.version>
 		<openjfx.version>11</openjfx.version>
+		<modulename>javamoduleexample</modulename>
 		<mainClass>jp.seraphyware.example.JavaModuleExample</mainClass>
+		<releasedir>release</releasedir>
 	</properties>
 
 	<dependencies>
@@ -136,6 +138,34 @@
 									<arg value="--update" />
 									<arg value="--file" />
 									<arg value="${project.build.directory}/mods/${project.artifactId}-${project.version}.jar" />
+								</exec>
+							</target>
+						</configuration>
+					</execution>
+					<execution>
+						<!-- jlinkでクライアント用のjreを生成する。
+							(現時点ではmavenのlink pluginは未完成のため、antで直接起動させている)
+						-->
+						<id>jlink</id>
+						<phase>package</phase>
+						<goals>
+							<goal>run</goal>
+						</goals>
+						<configuration>
+							<target>
+								<delete dir="${releasedir}" />
+								<exec executable="${java.home}/bin/jlink" failonerror="true">
+									<arg value="--module-path" />
+									<arg value="${project.build.directory}/mods"/>
+									<arg value="--add-modules" />
+									<arg value="${modulename}" />
+									<arg value="--no-man-pages" />
+									<arg value="--no-header-files" />
+									<arg value="--verbose" />
+									<arg value="--output" />
+									<arg value="${releasedir}" />
+									<arg value="--launcher" />
+									<arg value="run=${modulename}/${mainClass}" />
 								</exec>
 							</target>
 						</configuration>
