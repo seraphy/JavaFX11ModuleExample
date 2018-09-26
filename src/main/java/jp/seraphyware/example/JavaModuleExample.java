@@ -15,10 +15,13 @@ import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
+import javafx.scene.web.WebEngine;
+import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 
 /**
@@ -70,9 +73,9 @@ public class JavaModuleExample extends Application implements Initializable {
         System.out.println("fxml=" + fxmlLoc);
         ldr.setLocation(fxmlLoc);
 
-        Parent parent;
+        VBox parent;
         try {
-            parent = (Parent) ldr.load();
+            parent = (VBox) ldr.load();
 
         } catch (IOException ex) {
             throw new UncheckedIOException(ex);
@@ -83,7 +86,23 @@ public class JavaModuleExample extends Application implements Initializable {
         Class<?> cls = JavaModuleExample.class;
         stage.setTitle(cls.getModule().getName() + "/" + cls.getSimpleName());
 
-        stage.setScene(new Scene(parent));
+        // WebViewの利用のテスト
+        VBox box = new VBox();
+        {
+            WebView wv = new WebView();
+            WebEngine engine = wv.getEngine();
+            engine.loadContent("<title>t</title><h1>JavaFX Module Example</h1>", "text/html");
+
+            wv.setPrefSize(100, 60);
+
+            parent.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
+            box.getChildren().addAll(wv, parent);
+            VBox.setVgrow(box, Priority.NEVER);
+            VBox.setVgrow(parent, Priority.ALWAYS);
+        }
+
+        // シーンの設定とステージの表示
+        stage.setScene(new Scene(box));
         stage.show();
     }
 
