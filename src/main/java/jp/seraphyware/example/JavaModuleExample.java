@@ -73,6 +73,9 @@ public class JavaModuleExample extends Application implements Initializable {
         System.out.println("fxml=" + fxmlLoc);
         ldr.setLocation(fxmlLoc);
 
+//      String path = System.getenv("PATH");
+//      System.out.println("PATH=" + path);
+
         VBox parent;
         try {
             parent = (VBox) ldr.load();
