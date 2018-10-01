@@ -1,6 +1,6 @@
 # JavaFXをJava11でビルドして使えるようにする方法
 
-<ins>※ 2018/09/20修正: Java11のRC版(build 11+28) + OpenJFX11で試したバージョンに差し替え</ins>
+<ins>※ 2018/09/26修正: Java11(build 11+28) + OpenJFX11で試したバージョンに差し替え</ins>
 
 ## 要旨
 
@@ -17,7 +17,7 @@ Java11から、JavaFXは分離されるので、Java11(OpenJDK11)でJavaFXを使
 
 ## 実験コード
 
-Windows上のOpenJDK11(RC 11+28)で、以下のようなJavaFXの簡単なコードで試す。
+Windows上のOpenJDK11(11+28)で、以下のようなJavaFXの簡単なコードで試す。
 
 ```shell
 > java -version
@@ -97,7 +97,7 @@ public class JavaModuleExample extends Application implements Initializable {
         this.stage = stage;
 
         // FXMLからシーングラフを作成する
-        // ※ FXMLLoaderはリフレクションによって、このクラスのプライベートフィードを書き込む。
+        // ※ FXMLLoaderはリフレクションによって、このクラスのプライベートフィールドに書き込む。
         // そのためにはmodule-infoでopensしておく必要がある。
         var ldr = new FXMLLoader();
         ldr.setController(this);
@@ -311,11 +311,11 @@ module javamoduleexample {
 				<artifactId>maven-antrun-plugin</artifactId>
 				<version>1.8</version>
 				<executions>
+					<!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。 (-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
+						ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
+						** OpenJFX11正式版では空のjarには xxxEmptyという、別名となるモジュール名が割り当てられ衝突しなくなったので不要となった。 **
+						** 不要なjarであることには変わりないので、以下のスクリプトで消しても良い **
 					<execution>
-						<!-- 展開されたjavafxの依存jarのうち、-win.jar以外のものを消す。
-							(-win.jarでないものは1kbの中身空jarであり、module-infoもMANIFESTによる名前指定もないので、
-							ないので、ファイル名から自動モジュール名がつけられるが、これがよろしくない。)
-						 -->
 						<id>copy-dependencies</id>
 						<phase>prepare-package</phase>
 						<goals>
@@ -333,6 +333,7 @@ module javamoduleexample {
 							</target>
 						</configuration>
 					</execution>
+					-->
 					<execution>
 						<!--
 							現時点(maven-jar-plugin:3.1.0)では、module-info.javaに対する、module-main-class, module-version属性を
@@ -364,20 +365,22 @@ module javamoduleexample {
 					</execution>
 				</executions>
 			</plugin>
-			<!-- Mavenから実行できるようにする。(ただし、無名パッケージ扱いになる) mvn package exec:java -->
+			<!-- Mavenからモジュールとして実行できるようにする。
+				https://www.mojohaus.org/exec-maven-plugin/examples/example-exec-for-java-programs.html
+				mvn package exec:exec
+			 -->
 			<plugin>
 				<groupId>org.codehaus.mojo</groupId>
 				<artifactId>exec-maven-plugin</artifactId>
-				<version>1.2.1</version>
-				<executions>
-					<execution>
-						<goals>
-							<goal>java</goal>
-						</goals>
-					</execution>
-				</executions>
+				<version>1.6.0</version>
 				<configuration>
-					<mainClass>${mainClass}</mainClass>
+					<executable>${java.home}/bin/java</executable>
+					<arguments>
+						<argument>-p</argument>
+						<modulepath />
+						<argument>-m</argument>
+						<argument>javamoduleexample/${mainClass}</argument>
+					</arguments>
 				</configuration>
 			</plugin>
 		</plugins>
@@ -391,15 +394,15 @@ module javamoduleexample {
 - コンパイルでは ```release=11``` を指定した。
   - java10以前ではASMを差し替える等の細工が必要だったが、```maven-compiler-plugin:3.8.0``` では指定はいらないようだ。(むしろ不味い？)
 
-### ビルドと無名モジュールとしての実行
+### ビルドとモジュールとしての実行
 
 ```shell
-mvn package exec:java
+mvn package exec:exec
 ```
 
 このようにすると、ビルドして、実際にJavaFXのアプリケーションを起動してくれる。
 
-ただし、この場合、```module-info.java``` を指定していても、メインクラスは無名モジュールとして読み込まれているようである。
+```exec-maven-plugin:1.6.0``` 以降の機能を使って、モジュールを指定して起動させている。
 
 
 ### JavaFX関連jarの抜き出し
@@ -420,37 +423,22 @@ mvn package exec:java
 
 (ちなみに、Macの場合には、```javafx-*-mac.jar``` という名前が付けられている。)
 
-```win.jar``` でないものは、中身が空で、マニフェストもmodule-infoも入っていないので、いらないものである。
+```win.jar``` でないものは、中身が空で、いらないものである。
 
-というか、あると不味い。
-
-たとえば、modsフォルダをjavaのモジュールパスとして指定すると、この空のjarにはマニフェストもmodule-infoもないので、モジュールの規則に従い、ファイル名から「自動モジュール名」として認識されるが、その名前が不味いようなのだ。
-
-以下のようなエラーになる。
-
-```
-Caused by: java.lang.IllegalArgumentException: javafx.base.11.ea.19: Invalid module name: '11' is not a Java identifier
-```
-
-(名前が問題ないとしても、衝突の可能性もあるので、いらない名なしのモジュールはロードしないに越したことは無い。)
-
-なので、この中身空のjarは消しておく。
-
-(このpom.xmlでは、maven-antrun-plugin で消している。)
+なお、正式版でなかった時は、モジュール名の衝突問題があったため、この不用な空のjarは削除する必要があったが、正式版では空のjarにはMANIFEST.MF上で明示的に衝突しないxxxxEmptyというダミーのモジュール名を割り当てているため、削除しなくても問題ない。(しかし、無意味なjarであるので消したほうが良いとは思われる。)
 
 なお、最後の「javamoduleexample-1.0-SNAPSHOT.jar」は、このサンプルのモジュールjarである。
 
 ## javaコマンドからの実行
 
-Mavenの ```exec:java``` から実行した場合は、メインクラスはクラスパス指定されているようで、モジュールではなく無名モジュール扱いとなっているようである。
-
-モジュールとして扱うには以下のようにする。
+Javaコマンドでモジュールとして扱うには以下のようにする。
 
 ```shell
 java -p target/mods -m javamoduleexample/jp.seraphyware.example.JavaModuleExample
 ```
 
-ウィンドウタイトルは「モジュール名／クラス名」を表示するようにしているので、今度は、モジュール名が表示されている。
+ウィンドウタイトルは「モジュール名／クラス名」を表示するようにしている。
+
 
 ### モジュールの実行クラスを指定する場合
 
@@ -524,13 +512,28 @@ jlink --module-path target/mods --add-modules javamoduleexample --no-man-pages -
 
 これでできあがった実行環境は
 
-```
+```shell
 release\bin\run.bat
 ```
 
 のようにして起動できる。
 
-<font color="red">● openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、以下のような小細工が必要だったが、 **```11-ea+25```では修正された** ようである。</font>
+<font color="red">※ openjfxの ```11-ea+19``` の場合はネイティブライブラリのロードに失敗するため、jarからdllを抽出してコピーするという小細工が必要だったが、 *** ```11-ea+25``` では修正された *** ようである。</font>
+
+
+### Macの場合
+
+```bash
+#! /bin/bash
+export JAVA_HOME=$(/usr/libexec/java_home)
+
+mvn clean package
+
+rm -fr release
+$JAVA_HOME/bin/jlink --module-path target/mods --add-modules javamoduleexample --no-man-pages --no-header-files --verbose --output release --launcher run=javamoduleexample/jp.seraphyware.example.JavaModuleExample
+
+release/bin/run
+```
 
 ### 実行時にNoSuchMethodErrorエラーが発生する場合
 
@@ -561,14 +564,41 @@ release\bin\run.bat
 
 のようなシンプルな最小限のパスにしてから起動してみると良いかもしれない。
 
+### Pleiades201809のAdoptOpenJDK11での実行
+
+<font color="red">Pleiades-201809のJava11でJavaFXをEclipse上から実行する場合も、同様な理由で上記NoSuchMethodError例外が発生する。</font>
+
+これは起動時のPATHに現在のEclipseが使っているパスが含まれているためである。
+
+「実行の構成」から「環境」タブで、環境変数PATHを```"${env_var:SystemRoot}\System32;${env_var:SystemRoot}"```のように書き換えてやると、うまく起動できるようになる。
+
+```xml
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.eclipse.jdt.launching.localJavaApplication">
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
+<listEntry value="/javafx11moduleexample/src/main/java/jp/seraphyware/example/JavaModuleExample.java"/>
+</listAttribute>
+<listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
+<listEntry value="1"/>
+</listAttribute>
+<booleanAttribute key="org.eclipse.debug.core.appendEnvironmentVariables" value="false"/>
+<mapAttribute key="org.eclipse.debug.core.environmentVariables">
+<mapEntry key="Path" value="${env_var:SystemRoot}\System32;${env_var:SystemRoot}"/>
+</mapAttribute>
+<booleanAttribute key="org.eclipse.jdt.launching.ATTR_EXCLUDE_TEST_CODE" value="true"/>
+<booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_CLASSPATH_ONLY_JAR" value="false"/>
+<stringAttribute key="org.eclipse.jdt.launching.CLASSPATH_PROVIDER" value="org.eclipse.m2e.launchconfig.classpathProvider"/>
+<stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="jp.seraphyware.example.JavaModuleExample"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="javafx11moduleexample"/>
+<stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.m2e.launchconfig.sourcepathProvider"/>
+</launchConfiguration>
+```
 
 ## まとめ
 
 MavenでJavaFXを普通のライブラリとしてビルドできるようにしてもらったおかげで、JavaFXアプリのOpenJDK11対応も、それほど不自由なくゆけそうな感じである。
 
 Java9以降のモジュール仕組みに不慣れであったため戸惑うところもあるが、これは本質とは、あまり関係ない。
-
-挙動がおかしなところもあるけれど、まだ正式リリースされたものでないので、そのうち直るのではないか。
 
 それほど案ずる必要はなかったという実感を得た。
 
