@@ -1,0 +1,8 @@
+language: java
+env:
+    global:
+      - MAVEN_OPTS="-Xmx128m"
+jdk:
+  - openjdk11
+script:
+  - mvn clean package
