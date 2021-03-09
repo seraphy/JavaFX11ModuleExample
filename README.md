@@ -3,6 +3,8 @@
 
 <ins>※ 2018/09/26修正: Java11(build 11+28) + OpenJFX11で試したバージョンに差し替え</ins>
 
+<ins>※ 2021/3/10修正: [Java11 + OpenJFX15で配備可能ランタイム作成までの新しい手順の新プロジェクト](https://github.com/seraphy/Java11BrowserExample)を作成している。基礎的な注意事項については本稿と変わらないが、ツールが改良されていて手順が簡単になっている。</ins>
+
 ## 要旨
 
 Java11から、JavaFXは分離されるので、Java11(OpenJDK11)でJavaFXを使うにはどうしたらよいのか？
