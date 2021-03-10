@@ -1,4 +1,4 @@
-# JavaFXをJava11でビルドして使えるようにする方法 [![Build Status](https://travis-ci.org/seraphy/JavaFX11ModuleExample.svg?branch=master)](https://travis-ci.org/seraphy/JavaFX11ModuleExample) 
+# JavaFXをJava11でビルドして使えるようにする方法 [![Build Status](https://travis-ci.com/seraphy/JavaFX11ModuleExample.svg?branch=master)](https://travis-ci.com/seraphy/JavaFX11ModuleExample)
 
 
 <ins>※ 2018/09/26修正: Java11(build 11+28) + OpenJFX11で試したバージョンに差し替え</ins>
